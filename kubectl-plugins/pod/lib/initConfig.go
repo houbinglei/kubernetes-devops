@@ -27,3 +27,18 @@ func InitClient() *kubernetes.Clientset {
 func MergeFlags(cmd *cobra.Command) {
 	configFlags.AddFlags(cmd.Flags())
 }
+
+func RunCmd(f func(c *cobra.Command, args []string) error) {
+	cmd := &cobra.Command{
+		Use:          "kubectl pods [flags]",
+		Short:        "list pods ",
+		Example:      "kubectl pods [flags]",
+		SilenceUsage: true,
+		RunE:         f,
+	}
+	MergeFlags(cmd)
+	err := cmd.Execute()
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
