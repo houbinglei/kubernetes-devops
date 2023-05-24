@@ -20,17 +20,36 @@ func run(c *cobra.Command, args []string) error {
 	if ns == "" {
 		ns = "default"
 	}
-	list, err := client.CoreV1().Pods(ns).List(context.Background(), v1.ListOptions{})
+	list, err := client.CoreV1().Pods(ns).List(context.Background(), v1.ListOptions{
+		//LabelSelector: "app=reviews",
+		LabelSelector: lib.Labels,
+	})
 	if err != nil {
 		return err
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"名称", "命名空间", "IP", "状态"})
+	table.SetHeader(lib.InitHeader())
 
 	for _, pod := range list.Items {
-		table.Append([]string{pod.Name, pod.Namespace, pod.Status.PodIP,
-			string(pod.Status.Phase)})
+		podRow := []string{pod.Name, pod.Namespace, pod.Status.PodIP, string(pod.Status.Phase)}
+		if lib.ShowLabels {
+			//fmt.Println(pod.Labels)
+			// map[app:myapp pod-template-hash:6495489bdb]
+			podRow = append(podRow, lib.Map2String(pod.Labels))
+		}
+		table.Append(podRow)
 	}
+	//table.SetAutoWrapText(false)
+	//table.SetAutoFormatHeaders(true)
+	//table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	//table.SetAlignment(tablewriter.ALIGN_LEFT)
+	//table.SetCenterSeparator("")
+	//table.SetColumnSeparator("")
+	//table.SetRowSeparator("")
+	//table.SetHeaderLine(false)
+	//table.SetBorder(false)
+	//table.SetTablePadding("\t") // pad with tabs
+	//table.SetNoWhiteSpace(true)
 	table.Render()
 	return nil
 }

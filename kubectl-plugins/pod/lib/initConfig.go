@@ -24,6 +24,9 @@ func InitClient() *kubernetes.Clientset {
 
 }
 
+var ShowLabels bool
+var Labels string
+
 func MergeFlags(cmd *cobra.Command) {
 	configFlags.AddFlags(cmd.Flags())
 }
@@ -37,6 +40,9 @@ func RunCmd(f func(c *cobra.Command, args []string) error) {
 		RunE:         f,
 	}
 	MergeFlags(cmd)
+	cmd.Flags().BoolVar(&ShowLabels, "show-labels", false, "kubectl pods --show-labels")
+	cmd.Flags().StringVar(&Labels, "labels", "", "kubectl pods --lables app=ngx or kubectl pods --lables=\"app=ngx,version=v1\"")
+
 	err := cmd.Execute()
 	if err != nil {
 		log.Fatalln(err)
