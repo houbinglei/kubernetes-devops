@@ -1,3 +1,4 @@
+# kubectl 插件开发
 - 写个可执行程序（脚本也可） 放到PATH目录下, 文件名必须是kubectl-xxxx
 1、mkdir kubectl-plugins  (文件名随便。你喜欢就好)
 2、修改/etc/profile   把目录添加到PATH中
