@@ -7,3 +7,5 @@
 
 - "github.com/spf13/cobra" 命令库
 - "github.com/olekukonko/tablewriter" 表格库
+- "github.com/tidwall/gjson" 处理json
+- "github.com/charmbracelet/bubbletea" 命令行交互库
