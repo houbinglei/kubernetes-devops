@@ -1,9 +1,10 @@
-package lib
+package utils
 
 import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"kubernetes-devops/kubectl-plugins/myPod/typed"
 	"log"
 	"os"
 )
@@ -54,16 +55,14 @@ func (m podmodel) View() string {
 		s += fmt.Sprintf("%s %s\n", selected, item.title)
 	}
 
-	s += "\n按Q退出\n"
+	s += "\n按q退出\n"
 	return s
 }
 
 // 本课程来自 程序员在囧途(www.jtthink.com) 咨询群：98514334
-const PodEventType = "_event_path"
-const PodLogType = "_log_path"
 
 // 本课程来自 程序员在囧途(www.jtthink.com) 咨询群：98514334
-func runtea(args []string, cmd *cobra.Command) {
+func Runtea(args []string, cmd *cobra.Command) {
 	if len(args) == 0 {
 		log.Println("podname is required")
 		return
@@ -80,8 +79,8 @@ func runtea(args []string, cmd *cobra.Command) {
 		&podjson{title: "注解", path: "metadata.annotations"},
 		&podjson{title: "容器列表", path: "spec.containers"},
 		&podjson{title: "全部", path: "@this"},
-		&podjson{title: "_事件", path: PodEventType},
-		&podjson{title: "_日志", path: PodLogType},
+		&podjson{title: "_事件", path: typed.PodEventType},
+		&podjson{title: "_日志", path: typed.PodLogType},
 	)
 	teaCmd := tea.NewProgram(podModel)
 	if _, err := teaCmd.Run(); err != nil {

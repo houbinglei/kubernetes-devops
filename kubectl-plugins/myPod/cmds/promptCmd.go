@@ -1,10 +1,13 @@
-package lib
+package cmds
 
 import (
 	"fmt"
 	"github.com/c-bata/go-prompt"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
+	"kubernetes-devops/kubectl-plugins/myPod/cache"
+	"kubernetes-devops/kubectl-plugins/myPod/typed"
+	"kubernetes-devops/kubectl-plugins/myPod/utils"
 	"log"
 	"os"
 	"regexp"
@@ -19,27 +22,37 @@ func executorCmd(cmd *cobra.Command) func(in string) {
 		if len(blocks) > 1 {
 			args = blocks[1:]
 		}
+		blocks[0] = blocks[0]
 		switch blocks[0] {
-		case "exit":
+		case "exit", "q", "Q":
 			fmt.Println("Bye!")
-			os.Exit(0)
+			os.Exit(1)
 		case "list":
 			err := cacheCmd.RunE(cmd, args)
 			if err != nil {
 				log.Fatalln(err)
 			}
 		case "get":
-			// getPodDetail(args,cmd)
-			runtea(args, cmd)
+			utils.Runtea(args, cmd)
 		case "use":
-			// todo
 			setNameSpace(cmd, args)
+		case "jump":
+			if len(args) == 0 {
+				fmt.Println("请输入集群信息： prod/uat/tools/hci-prod/hci-uat")
+			} else if args[0] != "prod" && args[0] != "uat" && args[0] != "tools" && args[0] != "hci-prod" && args[0] != "hci-uat" {
+				fmt.Println("请输入集群信息： prod/uat/tools/hci-prod/hci-uat")
+			} else {
+				cache.InitClient(args[0])
+				cache.InitCache()
+			}
 		case "ns":
 			ns, _ := cmd.Flags().GetString("namespace")
 			if ns == "" {
 				ns = "default"
 			}
-			fmt.Println(ns)
+			fmt.Printf("当前namespace是：%s\n", ns)
+		default:
+			fmt.Println(typed.HelperInfo)
 		}
 	}
 }
@@ -59,6 +72,7 @@ var suggestions = []prompt.Suggest{
 	{"get", "获取POD详细"},
 	{"ns", "获取当前namespace"},
 	{"use", "设置当前namespace"},
+	{"jump", "跳转其他集群（支持输入：prod/uat/tools/hci-prod/hci-uat/"},
 }
 
 func getPodsList(cmd *cobra.Command) (ret []prompt.Suggest) {
@@ -66,7 +80,7 @@ func getPodsList(cmd *cobra.Command) (ret []prompt.Suggest) {
 	if ns == "" {
 		ns = "default"
 	}
-	pods, err := fact.Core().V1().Pods().Lister().
+	pods, err := cache.Fact.Core().V1().Pods().Lister().
 		Pods(ns).List(labels.Everything())
 	if err != nil {
 		return
@@ -82,7 +96,7 @@ func getPodsList(cmd *cobra.Command) (ret []prompt.Suggest) {
 }
 
 func getNamespaceList() (ret []prompt.Suggest) {
-	ns, err := fact.Core().V1().Namespaces().Lister().List(labels.Everything())
+	ns, err := cache.Fact.Core().V1().Namespaces().Lister().List(labels.Everything())
 	if err != nil {
 		return
 	}
@@ -111,10 +125,11 @@ func completerWrapper(command *cobra.Command) func(in prompt.Document) []prompt.
 			return []prompt.Suggest{}
 		}
 		cmd, opt := parseCmd(in.TextBeforeCursor())
-		if cmd == "get" {
+		cmd = cmd + " "
+		if cmd == "get " {
 			return prompt.FilterHasPrefix(getPodsList(command), opt, true)
 		}
-		if cmd == "use" {
+		if cmd == "use " {
 			return prompt.FilterHasPrefix(getNamespaceList(), opt, true)
 		}
 		return prompt.FilterHasPrefix(suggestions, w, true)
@@ -127,7 +142,6 @@ var promptCmd = &cobra.Command{
 	Example:      "kubectl pods prompt",
 	SilenceUsage: true,
 	RunE: func(c *cobra.Command, args []string) error {
-		InitCache()
 		p := prompt.New(
 			executorCmd(c),
 			completerWrapper(c),

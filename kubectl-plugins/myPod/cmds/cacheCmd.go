@@ -1,9 +1,11 @@
-package lib
+package cmds
 
 import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
+	"kubernetes-devops/kubectl-plugins/myPod/cache"
+	"kubernetes-devops/kubectl-plugins/myPod/utils"
 	"os"
 )
 
@@ -20,7 +22,7 @@ var cacheCmd = &cobra.Command{
 			ns = "default"
 		}
 
-		pods, err := fact.Core().V1().Pods().Lister().Pods(ns).
+		pods, err := cache.Fact.Core().V1().Pods().Lister().Pods(ns).
 			List(labels.Everything())
 		if err != nil {
 			return err
@@ -28,7 +30,7 @@ var cacheCmd = &cobra.Command{
 		//fmt.Println("从缓存取")
 		table := tablewriter.NewWriter(os.Stdout)
 		//设置头
-		table.SetHeader(InitHeader())
+		table.SetHeader(utils.InitHeader())
 		for _, pod := range pods {
 			podRow := []string{pod.Name, pod.Namespace, pod.Status.PodIP,
 				string(pod.Status.Phase)}
